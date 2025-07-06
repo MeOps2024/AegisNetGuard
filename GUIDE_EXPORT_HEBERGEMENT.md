@@ -20,10 +20,10 @@ aegislan/
 
 Commandes d’export depuis Replit
 
-# Créer une archive du projet
+ Créer une archive du projet
 tar -czf aegislan_projet.tar.gz *.py *.md .streamlit/ pyproject.toml
 
-# Ou télécharger fichier par fichier via l’interface Replit
+ Ou télécharger fichier par fichier via l’interface Replit
 
 Option 1 : Déploiement sur Windows Server 2012 R2
 
