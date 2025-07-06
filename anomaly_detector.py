@@ -136,8 +136,7 @@ class AnomalyDetector:
             random_state=42,
             n_estimators=100,
             max_samples='auto',
-            bootstrap=False,
-            behaviour='new'
+            bootstrap=False
         )
         
         # Entraînement

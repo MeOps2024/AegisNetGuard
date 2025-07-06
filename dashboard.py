@@ -244,7 +244,7 @@ class Dashboard:
             title='Top 10 Appareils par Volume de Données',
             labels={'total_volume': 'Volume (MB)', 'device_id': 'Appareil'}
         )
-        fig.update_xaxis(tickangle=45)
+        fig.update_layout(xaxis_tickangle=45)
         st.plotly_chart(fig, use_container_width=True)
     
     def _render_port_analysis(self, network_data, anomalies_data):
