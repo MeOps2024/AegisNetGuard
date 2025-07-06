@@ -37,8 +37,8 @@ Ce que vous faites :
 
     Cliquez sur "Générer Nouvelles Données"
 
-Ce que vous expliquez :
-"Le système simule un réseau d'entreprise réaliste avec différents types d'appareils : ordinateurs, serveurs, imprimantes, téléphones. Chaque appareil a son propre comportement normal. J'ai configuré une simulation de 24 heures avec 20 appareils pour la démonstration."
+Ce qui se passe :
+Le système simule un réseau d'entreprise réaliste avec différents types d'appareils : ordinateurs, serveurs, imprimantes, téléphones. Chaque appareil a son propre comportement normal. Une simulation de 24 heures avec 20 appareils permet de générer un trafic varié et crédible pour la démonstration.
 
 Étape 2 : Entraînement du modèle
 
@@ -50,8 +50,8 @@ Ce que vous faites :
 
     Montrez la barre de progression et les messages
 
-Ce que vous expliquez :
-"Maintenant, l'intelligence artificielle va apprendre les comportements normaux de chaque appareil. L'algorithme utilisé s'appelle Isolation Forest - c'est une technique avancée qui peut détecter les anomalies sans avoir besoin d'exemples d'attaques préalables. Le processus prend quelques secondes car le système analyse [X] échantillons de données."
+Ce qui se passe :
+L'intelligence artificielle apprend les comportements normaux de chaque appareil. L'algorithme utilisé s'appelle Isolation Forest – une méthode avancée qui détecte les anomalies sans avoir besoin d'exemples d'attaques. Le système analyse les données générées pour établir une base de référence.
 
 Étape 3 : Détection des anomalies
 
@@ -63,8 +63,8 @@ Ce que vous faites :
 
     Pointez vers les résultats affichés
 
-Ce que vous expliquez :
-"Le modèle entraîné examine maintenant toutes les données pour identifier les comportements anormaux. Regardez - il a détecté [X] anomalies classées par niveau de criticité."
+Ce qui se passe :
+Le modèle entraîné examine toutes les données pour identifier les comportements inhabituels. Les anomalies détectées sont affichées, classées par niveau de criticité (critique, élevé, moyen, faible).
 
 Comment interpréter les résultats
 
@@ -80,8 +80,8 @@ Montrez :
 
     Appareils surveillés : Nombre total
 
-Expliquez :
-"Ce tableau de bord vous donne l'état de santé global de votre réseau en un coup d'œil. Vous voyez immédiatement s'il y a des problèmes critiques qui nécessitent une attention immédiate."
+Ce qui se passe :
+Le tableau de bord affiche l'état global du système. Il permet de vérifier rapidement si le modèle est actif et s’il y a des problèmes nécessitant une attention immédiate.
 
 Section "Métriques réseau"
 
@@ -89,8 +89,8 @@ Montrez :
 
     Total connexions, anomalies détectées, appareils actifs, volume total, ports utilisés
 
-Expliquez :
-"Ces métriques vous donnent une vue quantitative de l'activité réseau. Un taux d'anomalies supérieur à 5% peut indiquer un problème de sécurité."
+Ce qui se passe :
+Ces métriques donnent une vue d’ensemble de l’activité réseau. Un nombre inhabituel d’anomalies ou une utilisation excessive de la bande passante peut révéler un problème de sécurité.
 
 Section "Alertes en temps réel"
 
@@ -100,8 +100,8 @@ Montrez :
 
     Détails de chaque alerte
 
-Expliquez :
-"Le système classe automatiquement les anomalies par niveau de danger. Les alertes critiques nécessitent une action immédiate, tandis que les alertes faibles sont juste informatives."
+Ce qui se passe :
+Les anomalies sont automatiquement catégorisées selon leur gravité. Les alertes critiques doivent être traitées rapidement, tandis que les alertes faibles sont à surveiller.
 
 Démonstration des graphiques
 
@@ -115,8 +115,8 @@ Montrez :
 
     Points d'anomalies
 
-Expliquez :
-"Ce graphique montre l'évolution temporelle du trafic. Les pics anormaux ou les activités en dehors des heures ouvrables peuvent indiquer des problèmes. Les points orange marquent les anomalies détectées."
+Ce qui se passe :
+Ce graphique permet de visualiser les volumes de données au fil du temps. Les pics soudains ou les activités en dehors des heures habituelles sont des signes potentiels d’attaque. Les points d’anomalies y sont visibles.
 
 Graphique "Activité par appareil"
 
@@ -126,8 +126,8 @@ Montrez :
 
     Top 10 des plus actifs
 
-Expliquez :
-"Ici, vous voyez quels appareils consomment le plus de bande passante. Si un appareil habituellement silencieux (comme une imprimante) apparaît soudainement en haut de cette liste, c'est suspect."
+Ce qui se passe :
+On voit ici quels appareils génèrent le plus d’activité. Si un appareil peu actif (comme une imprimante) devient soudainement très actif, cela peut signaler une anomalie.
 
 Graphique "Analyse des ports"
 
@@ -135,8 +135,8 @@ Montrez :
 
     Barres bleues (normales) vs oranges (avec anomalies)
 
-Expliquez :
-"Les ports sont comme des portes d'entrée sur les appareils. Les barres oranges indiquent des ports où des anomalies ont été détectées - cela peut signaler des tentatives d'intrusion."
+Ce qui se passe :
+Le graphique montre les ports réseau les plus utilisés. Des ports peu communs ou suspects peuvent indiquer une tentative d’accès non autorisé.
 
 Questions / Réponses courantes
 
@@ -151,7 +151,7 @@ R : Absolument. Ce que vous voyez utilise des données simulées pour la démons
 
 Détails techniques (si demandé)
 
-Architecture
+Architecture :
 
     Frontend : Streamlit (Python) pour l'interface web
 
@@ -161,7 +161,7 @@ Architecture
 
     Visualisation : Plotly pour les graphiques interactifs
 
-Avantages techniques
+Avantages techniques :
 
     Scalable : Peut gérer des milliers d'appareils
 
@@ -185,13 +185,13 @@ Points de vente clés
 
 Scénarios d'usage
 
-Détection d'intrusion
+Détection d'intrusion :
 Si un attaquant compromet un poste de travail, il va probablement commencer à scanner le réseau pour trouver d'autres cibles. AEGISLAN détectera immédiatement ce comportement anormal.
 
-Malware
+Malware :
 Un malware qui exfiltre des données créera un pic de trafic inhabituel. Le système l'identifiera même si c'est la première fois qu'il voit ce type d'attaque.
 
-Utilisateur compromis
+Utilisateur compromis :
 Si les identifiants d'un employé sont volés et utilisés en dehors des heures normales, AEGISLAN alertera sur cette activité suspecte.
 
 Conseils pour une démonstration réussie
