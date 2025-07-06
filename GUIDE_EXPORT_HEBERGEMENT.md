@@ -3,19 +3,21 @@ Solutions pour Présenter en Temps Réel
 
 Export du Projet
 
-Fichiers à exporter
+
+###  Export du Projet
+
+#### Fichiers à exporter
 Votre projet AEGISLAN contient :
 
 aegislan/
-├── app.py                    -> Application principale
-├── data_simulator.py         -> Simulateur de données réseau
-├── anomaly_detector.py       -> Moteur IA de détection
-├── dashboard.py              -> Interface utilisateur
-├── pyproject.toml            -> Dépendances Python
-├── .streamlit/config.toml    -> Configuration Streamlit
-├── GUIDE_UTILISATION.md      -> Guide utilisateur
-└── DOCUMENTATION_DEVELOPPEUR.md  -> Guide technique
-
+├── app.py                    # Application principale
+├── data_simulator.py         # Simulateur de données réseau
+├── anomaly_detector.py       # Moteur IA de détection
+├── dashboard.py              # Interface utilisateur
+├── pyproject.toml           # Dépendances Python
+├── .streamlit/config.toml   # Configuration Streamlit
+├── GUIDE_UTILISATION.md     # Guide utilisateur
+└── DOCUMENTATION_DEVELOPPEUR.md  # Guide technique
 Commandes d’export depuis Replit
 
 # Créer une archive du projet
