@@ -56,40 +56,40 @@ class Dashboard:
     
     def _render_system_status(self, network_data, anomalies_data, model_trained):
         """Affiche l'état du système"""
-        st.subheader("🔍 État du Système")
+        st.subheader("État du Système")
         
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             if not network_data.empty:
-                st.metric("📡 Statut Réseau", "Actif", delta="Surveillance")
+                st.metric("Statut Réseau", "Actif", delta="Surveillance")
             else:
-                st.metric("📡 Statut Réseau", "Inactif", delta="Aucune donnée")
+                st.metric("Statut Réseau", "Inactif", delta="Aucune donnée")
         
         with col2:
             if model_trained:
-                st.metric("🤖 Modèle IA", "Opérationnel", delta="Prêt")
+                st.metric("Modèle IA", "Opérationnel", delta="Prêt")
             else:
-                st.metric("🤖 Modèle IA", "Non entraîné", delta="Configuration requise")
+                st.metric("Modèle IA", "Non entraîné", delta="Configuration requise")
         
         with col3:
             if not anomalies_data.empty:
                 critical_count = len(anomalies_data[anomalies_data['severity'] == 'Critique'])
-                st.metric("🚨 Alertes Critiques", critical_count, 
+                st.metric("Alertes Critiques", critical_count, 
                          delta="Attention requise" if critical_count > 0 else "Système sain")
             else:
-                st.metric("🚨 Alertes Critiques", "0", delta="Système sain")
+                st.metric("Alertes Critiques", "0", delta="Système sain")
         
         with col4:
             if not network_data.empty:
                 devices_count = network_data['device_id'].nunique()
-                st.metric("💻 Appareils Surveillés", devices_count, delta="En ligne")
+                st.metric("Appareils Surveillés", devices_count, delta="En ligne")
             else:
-                st.metric("💻 Appareils Surveillés", "0", delta="Hors ligne")
+                st.metric("Appareils Surveillés", "0", delta="Hors ligne")
     
     def _render_key_metrics(self, network_data, anomalies_data):
         """Affiche les métriques clés"""
-        st.subheader("📊 Métriques Réseau")
+        st.subheader("Métriques Réseau")
         
         col1, col2, col3, col4, col5 = st.columns(5)
         
