@@ -1,24 +1,46 @@
-# Connexion à un Environnement Réel
+Connexion à un Environnement Réel
+Ce que fait l'IA actuellement
 
-## Ce que fait l'IA actuellement
+L'IA analyse 4 types de données :
 
-**L'IA analyse 4 types de données :**
-1. **Qui** se connecte (adresses IP, MAC)
-2. **Quand** (heures de connexion)
-3. **Comment** (ports, protocoles utilisés)
-4. **Combien** (volume de données échangées)
+Qui se connecte (adresses IP, MAC)
 
-**L'algorithme Isolation Forest :**
-- Apprend ce qui est "normal" pour chaque appareil
-- Détecte quand quelque chose sort de l'ordinaire
-- Classe les anomalies par niveau de danger
+Quand (heures de connexion)
 
-## Connexion avec Nmap
+Comment (ports, protocoles utilisés)
 
-### Étape 1 : Remplacer le simulateur par Nmap
+Combien (volume de données échangées)
 
-```python
-# Nouveau fichier : nmap_collector.py
+L’algorithme Isolation Forest :
+
+Apprend ce qui est "normal" pour chaque appareil
+
+Détecte quand un comportement sort de l'ordinaire
+
+Classe les anomalies par niveau de danger
+
+Exemples :
+
+Imprimante active entre 8h-18h, port 9100, 50MB par jour
+
+Serveur actif 24h/24, ports 80 et 443, 10GB par jour
+
+PC utilisateur actif de 9h à 17h, ports web, 500MB par jour
+
+Anomalies détectées :
+
+Imprimante qui transfère 5GB à 3h du matin
+
+PC utilisant un port jamais vu (ex : 1337)
+
+Serveur silencieux pendant 6h
+
+Connexion avec Nmap
+Étape 1 : Remplacer le simulateur par Nmap
+
+python
+Copier
+Modifier
 import subprocess
 import pandas as pd
 import xml.etree.ElementTree as ET
@@ -29,23 +51,18 @@ class NmapCollector:
         self.network_range = network_range
     
     def scan_network(self):
-        """Scan réseau avec Nmap"""
         cmd = f"nmap -sn -oX scan_results.xml {self.network_range}"
         subprocess.run(cmd, shell=True)
-        
         return self.parse_nmap_results("scan_results.xml")
     
     def parse_nmap_results(self, xml_file):
-        """Convertit résultats Nmap en données pour l'IA"""
         tree = ET.parse(xml_file)
         root = tree.getroot()
-        
         devices = []
         for host in root.findall("host"):
             ip = host.find("address[@addrtype='ipv4']").get("addr")
             mac = host.find("address[@addrtype='mac']")
             mac_addr = mac.get("addr") if mac is not None else "Unknown"
-            
             devices.append({
                 'timestamp': datetime.now(),
                 'ip_address': ip,
@@ -57,40 +74,30 @@ class NmapCollector:
                 'data_volume_mb': 1,
                 'is_anomaly': False
             })
-        
         return pd.DataFrame(devices)
-```
+Étape 2 : Modifier l’application principale
 
-### Étape 2 : Modifier app.py
-
-```python
-# Remplacer dans app.py
+python
+Copier
+Modifier
 from nmap_collector import NmapCollector
 
-# Remplacer cette ligne :
-# st.session_state.simulator = NetworkDataSimulator()
-# Par :
 st.session_state.collector = NmapCollector("192.168.1.0/24")
 
-# Remplacer le bouton génération par :
 if st.sidebar.button("Scanner le Réseau", type="primary"):
     with st.spinner("Scan Nmap en cours..."):
         st.session_state.network_data = st.session_state.collector.scan_network()
-    st.sidebar.success("Scan terminé!")
-```
+    st.sidebar.success("Scan terminé")
+Connexion à des Données Réelles
+Option A : Logs de routeur ou firewall
 
-## Connexion avec des Données Réseau Réelles
-
-### Option A : Logs de Routeur/Firewall
-
-```python
-# log_parser.py
+python
+Copier
+Modifier
 def parse_router_logs(log_file):
-    """Parse logs de routeur/firewall"""
     data = []
     with open(log_file, 'r') as f:
         for line in f:
-            # Exemple format : timestamp src_ip dst_ip port protocol
             parts = line.split()
             data.append({
                 'timestamp': pd.to_datetime(parts[0]),
@@ -100,44 +107,38 @@ def parse_router_logs(log_file):
                 'data_volume_mb': random.randint(1, 1000)
             })
     return pd.DataFrame(data)
-```
+Option B : Données SNMP
 
-### Option B : API SNMP
-
-```python
-# snmp_collector.py
+python
+Copier
+Modifier
 from pysnmp.hlapi import *
 
 def collect_snmp_data(router_ip, community="public"):
-    """Collecte données via SNMP"""
     for (errorIndication, errorStatus, errorIndex, varBinds) in nextCmd(
         SnmpEngine(),
         CommunityData(community),
         UdpTransportTarget((router_ip, 161)),
         ContextData(),
-        ObjectType(ObjectIdentity('1.3.6.1.2.1.2.2.1.10')),  # Interface octets
+        ObjectType(ObjectIdentity('1.3.6.1.2.1.2.2.1.10')),
         lexicographicMode=False):
         
-        if errorIndication:
-            break
-        if errorStatus:
+        if errorIndication or errorStatus:
             break
             
         for varBind in varBinds:
             print(' = '.join([x.prettyPrint() for x in varBind]))
-```
+Option C : Analyse de paquets (Wireshark)
 
-### Option C : Wireshark/tcpdump
-
-```python
-# packet_analyzer.py
+python
+Copier
+Modifier
 import pyshark
+from datetime import datetime
 
 def analyze_packets(interface="eth0", duration=60):
-    """Capture paquets réseau"""
     capture = pyshark.LiveCapture(interface=interface)
     capture.sniff(timeout=duration)
-    
     data = []
     for packet in capture:
         if hasattr(packet, 'ip'):
@@ -149,37 +150,34 @@ def analyze_packets(interface="eth0", duration=60):
                 'port': getattr(packet[packet.transport_layer], 'dstport', 0),
                 'size': int(packet.length)
             })
-    
     return pd.DataFrame(data)
-```
+Architecture pour Environnement Réel
+Structure recommandée :
 
-## Architecture pour Environnement Réel
-
-### Structure Recommandée
-
-```
+arduino
+Copier
+Modifier
 aegislan_production/
 ├── collectors/
-│   ├── nmap_collector.py      # Scan réseau
-│   ├── snmp_collector.py      # Données SNMP
-│   ├── log_parser.py          # Parse logs
-│   └── packet_analyzer.py     # Analyse paquets
+│   ├── nmap_collector.py
+│   ├── snmp_collector.py
+│   ├── log_parser.py
+│   └── packet_analyzer.py
 ├── database/
-│   ├── db_manager.py          # Gestion base de données
-│   └── models.py              # Modèles de données
+│   ├── db_manager.py
+│   └── models.py
 ├── detection/
-│   ├── anomaly_detector.py    # IA existante
-│   └── alert_manager.py       # Gestion alertes
+│   ├── anomaly_detector.py
+│   └── alert_manager.py
 ├── api/
-│   └── rest_api.py            # API REST
-├── app.py                     # Interface Streamlit
-└── config.py                  # Configuration
-```
+│   └── rest_api.py
+├── app.py
+└── config.py
+Base de données SQLite
 
-### Base de Données Persistante
-
-```python
-# db_manager.py
+python
+Copier
+Modifier
 import sqlite3
 import pandas as pd
 
@@ -189,7 +187,6 @@ class DatabaseManager:
         self.init_database()
     
     def init_database(self):
-        """Créer tables"""
         conn = sqlite3.connect(self.db_path)
         conn.execute('''
             CREATE TABLE IF NOT EXISTS network_data (
@@ -207,13 +204,11 @@ class DatabaseManager:
         conn.close()
     
     def insert_data(self, df):
-        """Insérer données réseau"""
         conn = sqlite3.connect(self.db_path)
         df.to_sql('network_data', conn, if_exists='append', index=False)
         conn.close()
     
     def get_recent_data(self, hours=24):
-        """Récupérer données récentes"""
         conn = sqlite3.connect(self.db_path)
         query = f'''
             SELECT * FROM network_data 
@@ -222,26 +217,20 @@ class DatabaseManager:
         df = pd.read_sql_query(query, conn)
         conn.close()
         return df
-```
-
-### Collecte Automatique
-
-```python
-# scheduler.py
+Collecte Automatique
+python
+Copier
+Modifier
 import schedule
 import time
 
 def collect_and_analyze():
-    """Collecte et analyse automatique"""
-    # 1. Collecter données
     collector = NmapCollector()
     data = collector.scan_network()
     
-    # 2. Stocker en base
     db = DatabaseManager()
     db.insert_data(data)
     
-    # 3. Analyser avec IA
     detector = AnomalyDetector()
     if not detector.is_trained:
         historical_data = db.get_recent_data(hours=72)
@@ -249,47 +238,39 @@ def collect_and_analyze():
     
     anomalies = detector.detect_anomalies(data)
     
-    # 4. Envoyer alertes
     if not anomalies.empty:
         send_alerts(anomalies)
 
-# Planifier exécution
 schedule.every(10).minutes.do(collect_and_analyze)
 
 while True:
     schedule.run_pending()
     time.sleep(1)
-```
+Installation sur Serveur de Production
+Prérequis
 
-## Installation sur Serveur de Production
-
-### Prérequis
-```bash
-# Ubuntu/Debian
+bash
+Copier
+Modifier
 sudo apt update
 sudo apt install python3 python3-pip nmap wireshark-common
 pip3 install streamlit pandas numpy plotly scikit-learn pyshark
+Fichier de configuration
 
-# Windows
-# Installer Nmap depuis nmap.org
-# Installer WinPcap/Npcap
-pip install streamlit pandas numpy plotly scikit-learn pyshark
-```
-
-### Configuration Sécurisée
-```python
-# config.py
+python
+Copier
+Modifier
 NETWORK_RANGE = "192.168.1.0/24"
-SCAN_INTERVAL = 600  # 10 minutes
+SCAN_INTERVAL = 600
 DATABASE_PATH = "/var/lib/aegislan/data.db"
 LOG_LEVEL = "INFO"
 ALERT_EMAIL = "admin@entreprise.com"
 WEB_PORT = 8501
-```
+Déploiement Linux (service)
 
-### Déploiement Service Linux
-```bash
-# /etc/systemd/system/aegislan.service
+ini
+Copier
+Modifier
 [Unit]
 Description=AEGISLAN Network Anomaly Detection
 After=network.target
@@ -303,13 +284,11 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-```
+Résumé final
+L’IA reste identique, seule la source de données change
 
-## Résumé Simple
+Tu peux basculer vers des données réelles : Nmap, SNMP, logs ou captures de paquets
 
-**Actuellement :** L'IA analyse des données simulées
-**Pour du réel :** Remplacer le simulateur par Nmap/SNMP/logs
-**L'IA reste identique :** Elle analyse toujours les mêmes patterns
-**Ajouts nécessaires :** Base de données + collecte automatique + alertes
+Architecture modulaire : collecte, stockage, détection, alertes
 
-L'IA fait exactement la même chose, elle reçoit juste de vraies données au lieu de données simulées.
+Le système peut tourner automatiquement en tâche de fond
