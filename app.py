@@ -8,7 +8,7 @@ from plotly.subplots import make_subplots
 
 from data_simulator import NetworkDataSimulator
 from anomaly_detector import AnomalyDetector
-from dashboard import Dashboard
+from dashboard_clean import Dashboard
 
 def main():
     st.set_page_config(
@@ -103,8 +103,13 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Navigation sections
+    if 'selected_section' not in st.session_state:
+        st.session_state.selected_section = "Dashboard"
+    
     sections = ["Dashboard", "Network Analysis", "Threat Detection", "System Configuration", "Reports"]
-    selected_section = st.selectbox("Navigate to section", sections, index=0)
+    selected_section = st.selectbox("Navigate to section", sections, 
+                                   index=sections.index(st.session_state.selected_section),
+                                   key="navigation_selectbox")
     
     # Sidebar controls (simplified)
     with st.sidebar:
@@ -199,6 +204,9 @@ def main():
                 st.success("No anomalies detected")
             
             detection_progress.empty()
+    
+    # Update session state
+    st.session_state.selected_section = selected_section
     
     # Main content based on selected section
     if selected_section == "Dashboard":

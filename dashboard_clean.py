@@ -7,7 +7,7 @@ from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 
 class Dashboard:
-    """Interface de tableau de bord pour AEGISLAN"""
+    """Interface de tableau de bord pour AEGISLAN - Version professionnelle"""
     
     def __init__(self):
         self.severity_colors = {
@@ -56,40 +56,40 @@ class Dashboard:
     
     def _render_system_status(self, network_data, anomalies_data, model_trained):
         """Affiche l'état du système"""
-        st.subheader("État du Système")
+        st.subheader("System Status")
         
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             if not network_data.empty:
-                st.metric("Statut Réseau", "Actif", delta="Surveillance")
+                st.metric("Network Status", "Active", delta="Monitoring")
             else:
-                st.metric("Statut Réseau", "Inactif", delta="Aucune donnée")
+                st.metric("Network Status", "Inactive", delta="No data")
         
         with col2:
             if model_trained:
-                st.metric("Modèle IA", "Opérationnel", delta="Prêt")
+                st.metric("AI Model", "Operational", delta="Ready")
             else:
-                st.metric("Modèle IA", "Non entraîné", delta="Configuration requise")
+                st.metric("AI Model", "Not trained", delta="Configuration required")
         
         with col3:
             if not anomalies_data.empty:
                 critical_count = len(anomalies_data[anomalies_data['severity'] == 'Critique'])
-                st.metric("Alertes Critiques", critical_count, 
-                         delta="Attention requise" if critical_count > 0 else "Système sain")
+                st.metric("Critical Alerts", critical_count, 
+                         delta="Attention required" if critical_count > 0 else "System healthy")
             else:
-                st.metric("Alertes Critiques", "0", delta="Système sain")
+                st.metric("Critical Alerts", "0", delta="System healthy")
         
         with col4:
             if not network_data.empty:
                 devices_count = network_data['device_id'].nunique()
-                st.metric("Appareils Surveillés", devices_count, delta="En ligne")
+                st.metric("Monitored Devices", devices_count, delta="Online")
             else:
-                st.metric("Appareils Surveillés", "0", delta="Hors ligne")
+                st.metric("Monitored Devices", "0", delta="Offline")
     
     def _render_key_metrics(self, network_data, anomalies_data):
         """Affiche les métriques clés"""
-        st.subheader("Métriques Réseau")
+        st.subheader("Network Metrics")
         
         col1, col2, col3, col4, col5 = st.columns(5)
         
@@ -98,24 +98,24 @@ class Dashboard:
         anomaly_rate = (anomalies_count / total_traffic * 100) if total_traffic > 0 else 0
         
         with col1:
-            st.metric("Total Connexions", f"{total_traffic:,}", 
-                     delta=f"Dernière heure")
+            st.metric("Total Connections", f"{total_traffic:,}", 
+                     delta="Last hour")
         
         with col2:
-            st.metric("Anomalies Détectées", anomalies_count, 
+            st.metric("Detected Anomalies", anomalies_count, 
                      delta=f"{anomaly_rate:.1f}%" if anomaly_rate > 0 else "Normal")
         
         with col3:
             unique_devices = network_data['device_id'].nunique()
-            st.metric("Appareils Actifs", unique_devices)
+            st.metric("Active Devices", unique_devices)
         
         with col4:
             total_volume = network_data['data_volume_mb'].sum()
-            st.metric("Volume Total", f"{total_volume:,.0f} MB")
+            st.metric("Total Volume", f"{total_volume:,.0f} MB")
         
         with col5:
             unique_ports = network_data['port'].nunique()
-            st.metric("Ports Utilisés", unique_ports)
+            st.metric("Ports Used", unique_ports)
     
     def _render_alerts(self, anomalies_data):
         """Affiche les alertes en temps réel"""
@@ -130,7 +130,7 @@ class Dashboard:
             severity_alerts = anomalies_data[anomalies_data['severity'] == severity]
             
             if not severity_alerts.empty:
-                with st.expander(f"Alerts {severity} ({len(severity_alerts)})", 
+                with st.expander(f"{severity} Alerts ({len(severity_alerts)})", 
                                expanded=(severity in ['Critique', 'Élevé'])):
                     
                     for idx, alert in severity_alerts.head(5).iterrows():
@@ -249,15 +249,17 @@ class Dashboard:
             x='device_id',
             y='total_volume',
             color='device_type',
-            title='Top 10 Appareils par Volume de Données',
-            labels={'total_volume': 'Volume (MB)', 'device_id': 'Appareil'}
+            title='Top 10 Most Active Devices',
+            labels={'total_volume': 'Total Volume (MB)', 'device_id': 'Device'},
+            hover_data=['unique_ports']
         )
-        fig.update_layout(xaxis_tickangle=45)
+        
+        fig.update_layout(height=350, template="plotly_dark", xaxis_tickangle=45)
         st.plotly_chart(fig, use_container_width=True)
     
     def _render_port_analysis(self, network_data, anomalies_data):
         """Analyse des ports utilisés"""
-        st.subheader("🔌 Analyse des Ports")
+        st.subheader("Port Usage Analysis")
         
         port_usage = network_data['port'].value_counts().head(15)
         
@@ -266,7 +268,7 @@ class Dashboard:
         if not anomalies_data.empty:
             anomaly_ports = set(anomalies_data['port'].unique())
         
-        colors = ['#ff7f0e' if port in anomaly_ports else '#1f77b4' 
+        colors = ['#FF4444' if port in anomaly_ports else '#00D4FF' 
                  for port in port_usage.index]
         
         fig = go.Figure(data=[
@@ -280,144 +282,120 @@ class Dashboard:
         ])
         
         fig.update_layout(
-            title='Top 15 Ports les Plus Utilisés',
+            title='Top 15 Most Used Ports',
             xaxis_title='Port',
-            yaxis_title='Nombre de Connexions',
-            height=300
+            yaxis_title='Connection Count',
+            height=300,
+            template="plotly_dark"
         )
         
         st.plotly_chart(fig, use_container_width=True)
         
         # Légende
         if anomaly_ports:
-            st.caption("🟠 Ports avec anomalies détectées | 🔵 Ports normaux")
+            st.caption("Red: Ports with detected anomalies | Blue: Normal ports")
     
     def _render_protocol_distribution(self, network_data):
         """Distribution des protocoles"""
-        st.subheader("📡 Distribution des Protocoles")
+        st.subheader("Protocol Distribution")
         
         protocol_dist = network_data['protocol'].value_counts()
         
         fig = px.pie(
             values=protocol_dist.values,
             names=protocol_dist.index,
-            title='Répartition du Trafic par Protocole'
+            title='Traffic Distribution by Protocol'
         )
         
+        fig.update_layout(height=350, template="plotly_dark")
         st.plotly_chart(fig, use_container_width=True)
     
     def _render_detailed_analysis(self, network_data, anomalies_data):
         """Section d'analyse détaillée"""
-        st.subheader("🔍 Analyse Détaillée")
+        st.subheader("Detailed Analysis")
         
-        tab1, tab2, tab3 = st.tabs(["📋 Données Brutes", "🚨 Anomalies", "📊 Statistiques"])
+        tab1, tab2, tab3 = st.tabs(["Network Summary", "Anomaly Details", "System Health"])
         
         with tab1:
-            st.subheader("Données Réseau Récentes")
-            if not network_data.empty:
-                # Affichage des données les plus récentes
-                recent_data = network_data.sort_values('timestamp', ascending=False).head(100)
-                
-                # Colonnes à afficher
-                display_columns = [
-                    'timestamp', 'device_id', 'ip_address', 'device_type',
-                    'port', 'protocol', 'data_volume_mb'
-                ]
-                
-                # Ajout de la colonne anomalie si disponible
-                if 'is_anomaly' in network_data.columns:
-                    display_columns.append('is_anomaly')
-                
-                st.dataframe(
-                    recent_data[display_columns],
-                    use_container_width=True,
-                    height=400
-                )
-            else:
-                st.info("Aucune donnée disponible")
+            st.markdown("### Network Overview")
+            
+            # Statistiques générales
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Traffic Statistics**")
+                st.write(f"Total connections: {len(network_data):,}")
+                st.write(f"Data volume: {network_data['data_volume_mb'].sum():.2f} MB")
+                st.write(f"Average per device: {network_data['data_volume_mb'].mean():.2f} MB")
+                st.write(f"Peak volume: {network_data['data_volume_mb'].max():.2f} MB")
+            
+            with col2:
+                st.markdown("**Device Statistics**")
+                st.write(f"Total devices: {network_data['device_id'].nunique()}")
+                st.write(f"Device types: {network_data['device_type'].nunique()}")
+                st.write(f"Protocols used: {network_data['protocol'].nunique()}")
+                st.write(f"Unique ports: {network_data['port'].nunique()}")
         
         with tab2:
-            st.subheader("Détails des Anomalies")
             if not anomalies_data.empty:
-                # Filtres pour les anomalies
+                st.markdown("### Anomaly Analysis")
+                
+                # Résumé des anomalies
+                severity_counts = anomalies_data['severity'].value_counts()
+                
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    severity_filter = st.selectbox(
-                        "Filtrer par criticité",
-                        ['Toutes'] + list(self.severity_colors.keys())
-                    )
+                    st.markdown("**Severity Breakdown**")
+                    for severity, count in severity_counts.items():
+                        st.write(f"{severity}: {count} alerts")
                 
                 with col2:
-                    device_filter = st.selectbox(
-                        "Filtrer par appareil",
-                        ['Tous'] + sorted(anomalies_data['device_id'].unique().tolist())
-                    )
+                    st.markdown("**Affected Devices**")
+                    affected_devices = anomalies_data['device_id'].nunique()
+                    st.write(f"Devices with anomalies: {affected_devices}")
+                    
+                    if affected_devices > 0:
+                        top_affected = anomalies_data['device_id'].value_counts().head(5)
+                        st.write("Most affected devices:")
+                        for device, count in top_affected.items():
+                            st.write(f"- {device}: {count} anomalies")
                 
-                # Application des filtres
-                filtered_anomalies = anomalies_data.copy()
-                
-                if severity_filter != 'Toutes':
-                    filtered_anomalies = filtered_anomalies[
-                        filtered_anomalies['severity'] == severity_filter
-                    ]
-                
-                if device_filter != 'Tous':
-                    filtered_anomalies = filtered_anomalies[
-                        filtered_anomalies['device_id'] == device_filter
-                    ]
-                
-                # Affichage des anomalies filtrées
-                display_columns = [
-                    'timestamp', 'device_id', 'ip_address', 'port', 'protocol',
-                    'data_volume_mb', 'severity', 'anomaly_confidence'
-                ]
-                
-                if 'anomaly_type' in filtered_anomalies.columns:
-                    display_columns.append('anomaly_type')
-                
-                st.dataframe(
-                    filtered_anomalies[display_columns],
-                    use_container_width=True,
-                    height=400
-                )
-                
-                # Téléchargement des anomalies
-                csv = filtered_anomalies.to_csv(index=False)
-                st.download_button(
-                    label="📥 Télécharger les anomalies (CSV)",
-                    data=csv,
-                    file_name=f"anomalies_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-                
+                # Table des anomalies récentes
+                st.markdown("**Recent Anomalies**")
+                recent_anomalies = anomalies_data.head(10)[['timestamp', 'device_id', 'severity', 'anomaly_score', 'port']]
+                st.dataframe(recent_anomalies, use_container_width=True)
             else:
-                st.success("✅ Aucune anomalie détectée")
+                st.success("No anomalies detected in current dataset")
         
         with tab3:
-            st.subheader("Statistiques du Réseau")
-            if not network_data.empty:
-                col1, col2 = st.columns(2)
+            st.markdown("### System Health")
+            
+            # Indicateurs de santé
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Performance Metrics**")
+                anomaly_rate = (len(anomalies_data) / len(network_data) * 100) if len(network_data) > 0 else 0
+                st.write(f"Anomaly rate: {anomaly_rate:.2f}%")
                 
-                with col1:
-                    st.write("**Statistiques Générales**")
-                    stats = {
-                        "Période d'analyse": f"{network_data['timestamp'].min()} - {network_data['timestamp'].max()}",
-                        "Total échantillons": len(network_data),
-                        "Appareils uniques": network_data['device_id'].nunique(),
-                        "Ports uniques": network_data['port'].nunique(),
-                        "Volume total (MB)": f"{network_data['data_volume_mb'].sum():,.0f}",
-                        "Volume moyen (MB)": f"{network_data['data_volume_mb'].mean():.2f}"
-                    }
+                if anomaly_rate < 1:
+                    st.success("Low anomaly rate - System healthy")
+                elif anomaly_rate < 5:
+                    st.warning("Moderate anomaly rate - Monitor closely")
+                else:
+                    st.error("High anomaly rate - Investigation required")
+            
+            with col2:
+                st.markdown("**Recommendations**")
+                
+                if anomalies_data.empty:
+                    st.write("- Continue normal monitoring")
+                    st.write("- Regular model retraining recommended")
+                else:
+                    st.write("- Review anomalous devices")
+                    st.write("- Update security policies if needed")
+                    st.write("- Consider network segmentation")
                     
-                    for key, value in stats.items():
-                        st.write(f"- **{key}:** {value}")
-                
-                with col2:
-                    st.write("**Types d'Appareils**")
-                    device_types = network_data['device_type'].value_counts()
-                    for device_type, count in device_types.items():
-                        percentage = (count / len(network_data)) * 100
-                        st.write(f"- **{device_type}:** {count} ({percentage:.1f}%)")
-            else:
-                st.info("Aucune donnée pour les statistiques")
+                    if len(anomalies_data) > 10:
+                        st.write("- Immediate security review required")
