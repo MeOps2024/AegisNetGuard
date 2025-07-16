@@ -15,56 +15,47 @@ def main():
         page_title="AEGISLAN - Enterprise Network Security",
         page_icon="🛡️",
         layout="wide",
-        initial_sidebar_state="collapsed"
+        initial_sidebar_state="expanded"
     )
     
     # Custom CSS for professional dark theme
     st.markdown("""
     <style>
+    .main {
+        background-color: #0E1117;
+        color: #FAFAFA;
+    }
+    .stApp {
+        background-color: #0E1117;
+    }
     .main-header {
-        background: linear-gradient(90deg, #0E1117 0%, #1E2130 100%);
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-        border-bottom: 2px solid #00D4FF;
-    }
-    .metric-card {
-        background: #1E2130;
-        padding: 1.5rem;
+        background: linear-gradient(90deg, #262730 0%, #1E1E2E 50%, #262730 100%);
+        padding: 2rem;
         border-radius: 10px;
+        margin-bottom: 2rem;
         border: 1px solid #00D4FF;
-        margin-bottom: 1rem;
     }
-    .alert-critical {
-        background: #4A1F1F;
-        border: 2px solid #FF4444;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 0.5rem 0;
+    .stSelectbox > div > div {
+        background-color: #262730;
+        border: 1px solid #00D4FF;
     }
-    .alert-high {
-        background: #4A2F1F;
-        border: 2px solid #FF8800;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 0.5rem 0;
-    }
-    .section-header {
-        color: #00D4FF;
-        font-size: 1.8rem;
-        font-weight: 600;
-        margin: 2rem 0 1rem 0;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #00D4FF;
-    }
-    .status-online { color: #00FF88; }
-    .status-warning { color: #FFAA00; }
-    .status-critical { color: #FF4444; }
-    .nav-section {
-        background: #1E2130;
+    .metric-container {
+        background-color: #262730;
         padding: 1rem;
         border-radius: 8px;
-        margin: 1rem 0;
-        border: 1px solid #333;
+        border: 1px solid #444;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #262730;
+        border: 1px solid #444;
+        color: #FAFAFA;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #00D4FF !important;
+        color: #000000 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -88,7 +79,7 @@ def main():
     if 'model_trained' not in st.session_state:
         st.session_state.model_trained = False
     
-    # Navigation menu
+    # Header
     st.markdown('<div class="main-header">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -102,27 +93,22 @@ def main():
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Navigation sections
-    if 'selected_section' not in st.session_state:
-        st.session_state.selected_section = "Dashboard"
-    
+    # Navigation - using radio buttons instead of selectbox
     sections = ["Dashboard", "Network Analysis", "Threat Detection", "System Configuration", "Reports"]
-    selected_section = st.selectbox("Navigate to section", sections, 
-                                   index=sections.index(st.session_state.selected_section),
-                                   key="navigation_selectbox")
+    selected_section = st.radio("Navigate to section", sections, horizontal=True, key="main_navigation")
     
-    # Sidebar controls (simplified)
+    # Sidebar controls
     with st.sidebar:
         st.markdown("### System Control")
         st.markdown("---")
     
         # Data simulation controls
         st.markdown("#### Network Data")
-        num_devices = st.slider("Devices", 5, 50, 20)
-        hours_of_data = st.slider("Hours", 1, 72, 24)
-        anomaly_rate = st.slider("Anomaly Rate (%)", 1, 20, 5)
+        num_devices = st.slider("Devices", 5, 50, 20, key="devices_slider")
+        hours_of_data = st.slider("Hours", 1, 72, 24, key="hours_slider")
+        anomaly_rate = st.slider("Anomaly Rate (%)", 1, 20, 5, key="anomaly_slider")
         
-        if st.button("Generate Data", type="primary"):
+        if st.button("Generate Data", type="primary", key="generate_button"):
             with st.spinner("Processing network data..."):
                 st.session_state.network_data = st.session_state.simulator.generate_network_data(
                     num_devices=num_devices,
@@ -134,9 +120,9 @@ def main():
         
         # Model training controls
         st.markdown("#### AI Model")
-        contamination = st.slider("Contamination", 0.01, 0.3, 0.1, 0.01)
+        contamination = st.slider("Contamination", 0.01, 0.3, 0.1, 0.01, key="contamination_slider")
     
-        if st.button("Train Model") and not st.session_state.network_data.empty:
+        if st.button("Train Model", key="train_button") and not st.session_state.network_data.empty:
             # Training process display
             training_placeholder = st.empty()
             progress_bar = st.progress(0)
@@ -144,69 +130,38 @@ def main():
             training_placeholder.info("Starting training...")
             progress_bar.progress(10)
             
-            training_placeholder.info("Preparing data...")
+            training_placeholder.info("Preparing features...")
             progress_bar.progress(30)
             
-            training_placeholder.info("Training AI model...")
+            training_placeholder.info("Training Isolation Forest...")
             progress_bar.progress(60)
             
             # Actual training
-            st.session_state.detector.train_model(
-                st.session_state.network_data,
-                contamination=contamination
-            )
+            st.session_state.detector.train_model(st.session_state.network_data, contamination=contamination)
+            progress_bar.progress(80)
             
-            progress_bar.progress(90)
-            training_placeholder.info("Finalizing...")
+            training_placeholder.info("Finalizing model...")
             progress_bar.progress(100)
             
             st.session_state.model_trained = True
-            
-            # Success message
             training_placeholder.success("Model trained successfully!")
-            st.success(f"AI operational with {len(st.session_state.network_data)} samples")
-            
-            # Display model information
-            model_info = st.session_state.detector.get_model_info()
-            st.write(f"Features used: {model_info['features_count']}")
-            st.write(f"Contamination: {contamination:.2f}")
-            
             progress_bar.empty()
-    
+        
         # Anomaly detection
-        if st.button("Detect Anomalies") and st.session_state.model_trained:
-            # Detection process display
-            detection_placeholder = st.empty()
-            detection_progress = st.progress(0)
+        st.markdown("#### Anomaly Detection")
+        if st.button("Detect Anomalies", key="detect_button") and st.session_state.model_trained and not st.session_state.network_data.empty:
+            detection_progress = st.empty()
+            detection_progress.info("Analyzing network patterns...")
             
-            detection_placeholder.info("Analysis in progress...")
-            detection_progress.progress(25)
+            st.session_state.anomalies_detected = st.session_state.detector.detect_anomalies(st.session_state.network_data)
             
-            detection_placeholder.info("AI examining data...")
-            detection_progress.progress(50)
-            
-            detection_placeholder.info("Searching for anomalies...")
-            detection_progress.progress(75)
-            
-            # Actual detection
-            st.session_state.anomalies_detected = st.session_state.detector.detect_anomalies(
-                st.session_state.network_data
-            )
-            
-            detection_progress.progress(100)
-            detection_placeholder.success("Analysis completed!")
-            
-            # Results
-            num_anomalies = len(st.session_state.anomalies_detected)
-            if num_anomalies > 0:
-                st.warning(f"{num_anomalies} anomalies detected!")
+            if not st.session_state.anomalies_detected.empty:
+                anomaly_count = len(st.session_state.anomalies_detected)
+                detection_progress.warning(f"⚠️ {anomaly_count} anomalies detected!")
             else:
-                st.success("No anomalies detected")
+                detection_progress.success("No anomalies detected")
             
             detection_progress.empty()
-    
-    # Update session state
-    st.session_state.selected_section = selected_section
     
     # Main content based on selected section
     if selected_section == "Dashboard":
@@ -222,9 +177,6 @@ def main():
 
 def render_dashboard_section():
     """Main dashboard section"""
-    st.markdown('<div class="section-header">Network Security Dashboard</div>', unsafe_allow_html=True)
-    
-    # Display dashboard
     st.session_state.dashboard.render_dashboard(
         st.session_state.network_data,
         st.session_state.anomalies_detected,
@@ -233,183 +185,314 @@ def render_dashboard_section():
 
 def render_network_analysis_section():
     """Network analysis section"""
-    st.markdown('<div class="section-header">Network Traffic Analysis</div>', unsafe_allow_html=True)
+    st.header("Network Analysis")
     
     if st.session_state.network_data.empty:
-        st.info("Generate network data to begin analysis")
+        st.info("Generate network data to begin analysis.")
         return
     
-    # Network statistics
+    # Network overview
     col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
-        st.metric("Total Connections", len(st.session_state.network_data))
+        total_connections = len(st.session_state.network_data)
+        st.metric("Total Connections", f"{total_connections:,}")
+    
     with col2:
-        st.metric("Active Devices", st.session_state.network_data['device_id'].nunique())
+        unique_devices = st.session_state.network_data['device_id'].nunique()
+        st.metric("Active Devices", unique_devices)
+    
     with col3:
-        st.metric("Data Volume", f"{st.session_state.network_data['data_volume_mb'].sum():.1f} MB")
+        protocols = st.session_state.network_data['protocol'].nunique()
+        st.metric("Protocols", protocols)
+    
     with col4:
-        st.metric("Unique Ports", st.session_state.network_data['port'].nunique())
+        total_volume = st.session_state.network_data['data_volume_mb'].sum()
+        st.metric("Total Volume", f"{total_volume:.1f} MB")
     
-    # Traffic analysis charts
-    st.markdown("### Traffic Patterns")
+    # Detailed analysis tabs
+    tab1, tab2, tab3 = st.tabs(["Traffic Patterns", "Device Behavior", "Protocol Analysis"])
     
-    # Timeline chart
-    fig = px.line(st.session_state.network_data, x='timestamp', y='data_volume_mb', 
-                  title='Network Traffic Over Time')
-    fig.update_layout(template="plotly_dark")
-    st.plotly_chart(fig, use_container_width=True)
+    with tab1:
+        st.subheader("Traffic Timeline")
+        
+        # Hourly traffic analysis
+        hourly_data = st.session_state.network_data.groupby(
+            st.session_state.network_data['timestamp'].dt.floor('H')
+        ).agg({
+            'data_volume_mb': 'sum',
+            'device_id': 'count'
+        }).reset_index()
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=hourly_data['timestamp'],
+            y=hourly_data['data_volume_mb'],
+            mode='lines+markers',
+            name='Data Volume (MB)',
+            line=dict(color='#00D4FF')
+        ))
+        
+        fig.update_layout(
+            title="Network Traffic Over Time",
+            xaxis_title="Time",
+            yaxis_title="Data Volume (MB)",
+            template="plotly_dark"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
     
-    # Protocol distribution
-    protocol_counts = st.session_state.network_data['protocol'].value_counts()
-    fig = px.pie(values=protocol_counts.values, names=protocol_counts.index,
-                 title='Protocol Distribution')
-    fig.update_layout(template="plotly_dark")
-    st.plotly_chart(fig, use_container_width=True)
+    with tab2:
+        st.subheader("Device Activity")
+        
+        device_stats = st.session_state.network_data.groupby(['device_id', 'device_type']).agg({
+            'data_volume_mb': 'sum',
+            'port': 'nunique'
+        }).reset_index()
+        
+        fig = px.scatter(
+            device_stats,
+            x='data_volume_mb',
+            y='port',
+            color='device_type',
+            size='data_volume_mb',
+            hover_data=['device_id'],
+            title="Device Activity Analysis"
+        )
+        
+        fig.update_layout(template="plotly_dark")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with tab3:
+        st.subheader("Protocol Distribution")
+        
+        protocol_dist = st.session_state.network_data['protocol'].value_counts()
+        
+        fig = px.pie(
+            values=protocol_dist.values,
+            names=protocol_dist.index,
+            title="Protocol Usage Distribution"
+        )
+        
+        fig.update_layout(template="plotly_dark")
+        st.plotly_chart(fig, use_container_width=True)
 
 def render_threat_detection_section():
     """Threat detection section"""
-    st.markdown('<div class="section-header">AI-Powered Threat Detection</div>', unsafe_allow_html=True)
+    st.header("Threat Detection")
     
     if not st.session_state.model_trained:
-        st.warning("AI model not trained. Please train the model first.")
+        st.warning("Train the AI model first to enable threat detection.")
         return
     
-    # Anomaly overview
-    if not st.session_state.anomalies_detected.empty:
-        st.markdown("### Detected Threats")
-        
-        # Severity breakdown
-        severity_counts = st.session_state.anomalies_detected['severity'].value_counts()
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            critical = severity_counts.get('Critique', 0)
-            st.metric("Critical Threats", critical, delta="High Priority" if critical > 0 else None)
-        with col2:
-            high = severity_counts.get('Élevé', 0)
-            st.metric("High Threats", high)
-        with col3:
-            medium = severity_counts.get('Moyen', 0)
-            st.metric("Medium Threats", medium)
-        with col4:
-            low = severity_counts.get('Faible', 0)
-            st.metric("Low Threats", low)
-        
-        # Threat timeline
-        fig = px.scatter(st.session_state.anomalies_detected, x='timestamp', y='anomaly_score',
-                        color='severity', title='Threat Detection Timeline')
-        fig.update_layout(template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Detailed threat list
-        st.markdown("### Threat Details")
-        for _, anomaly in st.session_state.anomalies_detected.iterrows():
-            severity_class = f"alert-{anomaly['severity'].lower()}"
-            st.markdown(f"""
-            <div class="{severity_class}">
-                <strong>Device:</strong> {anomaly['device_id']} | 
-                <strong>Severity:</strong> {anomaly['severity']} | 
-                <strong>Score:</strong> {anomaly['anomaly_score']:.2f}<br>
-                <strong>Time:</strong> {anomaly['timestamp']} | 
-                <strong>Port:</strong> {anomaly['port']} | 
-                <strong>Protocol:</strong> {anomaly['protocol']}
-            </div>
-            """, unsafe_allow_html=True)
+    if st.session_state.anomalies_detected.empty:
+        st.success("No threats detected - Network is secure")
+        return
+    
+    # Threat summary
+    col1, col2, col3, col4 = st.columns(4)
+    
+    severity_counts = st.session_state.anomalies_detected['severity'].value_counts()
+    
+    with col1:
+        critical = severity_counts.get('Critique', 0)
+        st.metric("Critical Threats", critical, delta="Immediate action required" if critical > 0 else None)
+    
+    with col2:
+        high = severity_counts.get('Élevé', 0)
+        st.metric("High Threats", high)
+    
+    with col3:
+        medium = severity_counts.get('Moyen', 0)
+        st.metric("Medium Threats", medium)
+    
+    with col4:
+        low = severity_counts.get('Faible', 0)
+        st.metric("Low Threats", low)
+    
+    # Threat details
+    st.subheader("Threat Details")
+    
+    # Filter by severity
+    severity_filter = st.selectbox("Filter by severity", 
+                                  ['All'] + list(severity_counts.index),
+                                  key="severity_filter")
+    
+    if severity_filter != 'All':
+        filtered_threats = st.session_state.anomalies_detected[
+            st.session_state.anomalies_detected['severity'] == severity_filter
+        ]
     else:
-        st.success("No threats detected. Network is secure.")
+        filtered_threats = st.session_state.anomalies_detected
+    
+    # Display threats table
+    if not filtered_threats.empty:
+        st.dataframe(
+            filtered_threats[['timestamp', 'device_id', 'ip_address', 'port', 'severity', 'anomaly_score']],
+            use_container_width=True
+        )
+    else:
+        st.info("No threats match the selected filter.")
 
 def render_system_config_section():
     """System configuration section"""
-    st.markdown('<div class="section-header">System Configuration</div>', unsafe_allow_html=True)
+    st.header("System Configuration")
     
-    # AI Model Configuration
-    st.markdown("### AI Model Settings")
+    tab1, tab2, tab3 = st.tabs(["Model Settings", "Detection Parameters", "System Status"])
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**Model Status**")
+    with tab1:
+        st.subheader("AI Model Configuration")
+        
         if st.session_state.model_trained:
-            st.success("Model is trained and operational")
             model_info = st.session_state.detector.get_model_info()
-            st.write(f"Features: {model_info['features_count']}")
-            st.write(f"Algorithm: Isolation Forest")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**Model Status:** Trained and Ready")
+                st.write(f"**Training Samples:** {model_info.get('n_samples', 'N/A')}")
+                st.write(f"**Features:** {model_info.get('n_features', 'N/A')}")
+            
+            with col2:
+                st.write(f"**Contamination:** {model_info.get('contamination', 'N/A')}")
+                st.write(f"**Training Time:** {model_info.get('training_time', 'N/A')}")
         else:
-            st.warning("Model requires training")
+            st.warning("AI model not trained yet")
     
-    with col2:
-        st.markdown("**Training Parameters**")
-        st.write("Contamination: Percentage of expected anomalies")
-        st.write("Features: Network behavioral patterns")
-        st.write("Algorithm: Unsupervised learning")
+    with tab2:
+        st.subheader("Detection Parameters")
+        
+        st.write("**Current Settings:**")
+        st.write("- Contamination rate: Adjustable via sidebar")
+        st.write("- Detection threshold: Auto-calibrated")
+        st.write("- Severity classification: Based on anomaly score")
+        
+        st.info("Advanced parameters can be adjusted in the sidebar before training.")
     
-    # Network Configuration
-    st.markdown("### Network Configuration")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**Data Collection**")
-        st.write("Source: Network traffic simulation")
-        st.write("Frequency: Real-time analysis")
-        st.write("Retention: In-memory storage")
-    
-    with col2:
-        st.markdown("**Security Settings**")
-        st.write("Encryption: Data processed securely")
-        st.write("Access: Restricted to authorized users")
-        st.write("Logging: Activity monitoring enabled")
+    with tab3:
+        st.subheader("System Health")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Data Status:**")
+            if not st.session_state.network_data.empty:
+                st.success("✅ Network data loaded")
+                st.write(f"Records: {len(st.session_state.network_data):,}")
+            else:
+                st.error("❌ No network data")
+        
+        with col2:
+            st.write("**AI Model Status:**")
+            if st.session_state.model_trained:
+                st.success("✅ Model trained and ready")
+            else:
+                st.warning("⚠️ Model requires training")
 
 def render_reports_section():
     """Reports section"""
-    st.markdown('<div class="section-header">Security Reports</div>', unsafe_allow_html=True)
+    st.header("Security Reports")
     
     if st.session_state.network_data.empty:
-        st.info("No data available for reporting")
+        st.info("Generate network data to create reports.")
         return
     
-    # Generate comprehensive report
+    # Executive summary
+    st.subheader("Executive Summary")
+    
     total_connections = len(st.session_state.network_data)
     anomalies_count = len(st.session_state.anomalies_detected)
     anomaly_rate = (anomalies_count / total_connections * 100) if total_connections > 0 else 0
     
-    # Executive summary
-    st.markdown("### Executive Summary")
-    st.markdown(f"""
-    <div class="nav-section">
-        <h4>Network Security Assessment</h4>
-        <p><strong>Total Network Activity:</strong> {total_connections:,} connections analyzed</p>
-        <p><strong>Anomalies Detected:</strong> {anomalies_count} threats ({anomaly_rate:.1f}% anomaly rate)</p>
-        <p><strong>Security Status:</strong> {"ALERT" if anomalies_count > 0 else "SECURE"}</p>
-        <p><strong>Recommendation:</strong> {"Immediate investigation required" if anomalies_count > 0 else "Continue monitoring"}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
     
-    # Detailed metrics
-    st.markdown("### Detailed Metrics")
-    
-    col1, col2 = st.columns(2)
     with col1:
-        st.markdown("**Network Activity**")
-        st.write(f"Active devices: {st.session_state.network_data['device_id'].nunique()}")
-        st.write(f"Data volume: {st.session_state.network_data['data_volume_mb'].sum():.1f} MB")
-        st.write(f"Protocols used: {st.session_state.network_data['protocol'].nunique()}")
-        st.write(f"Ports accessed: {st.session_state.network_data['port'].nunique()}")
+        st.metric("Network Health Score", 
+                 f"{max(0, 100 - anomaly_rate * 2):.0f}%",
+                 delta="Network security rating")
     
     with col2:
-        st.markdown("**Security Analysis**")
-        if not st.session_state.anomalies_detected.empty:
-            severity_counts = st.session_state.anomalies_detected['severity'].value_counts()
-            for severity, count in severity_counts.items():
-                st.write(f"{severity} threats: {count}")
-        else:
-            st.write("No security threats detected")
+        st.metric("Risk Level", 
+                 "LOW" if anomaly_rate < 2 else "MEDIUM" if anomaly_rate < 5 else "HIGH",
+                 delta=f"{anomaly_rate:.1f}% anomaly rate")
     
-    # Download report button
-    if st.button("Export Report"):
-        st.success("Report export functionality would be implemented here")
-
-
-if __name__ == "__main__":
-    main()
+    with col3:
+        st.metric("Compliance Status", 
+                 "COMPLIANT" if anomaly_rate < 3 else "REVIEW REQUIRED")
+    
+    # Detailed reports
+    tab1, tab2, tab3 = st.tabs(["Network Overview", "Security Analysis", "Recommendations"])
+    
+    with tab1:
+        st.subheader("Network Activity Report")
+        
+        # Time range analysis
+        time_range = st.session_state.network_data['timestamp'].max() - st.session_state.network_data['timestamp'].min()
+        
+        st.write(f"**Monitoring Period:** {time_range}")
+        st.write(f"**Total Devices:** {st.session_state.network_data['device_id'].nunique()}")
+        st.write(f"**Total Connections:** {total_connections:,}")
+        st.write(f"**Data Volume:** {st.session_state.network_data['data_volume_mb'].sum():.2f} MB")
+        
+        # Device breakdown
+        device_summary = st.session_state.network_data.groupby('device_type').agg({
+            'device_id': 'nunique',
+            'data_volume_mb': 'sum'
+        }).reset_index()
+        
+        st.subheader("Device Type Summary")
+        st.dataframe(device_summary, use_container_width=True)
+    
+    with tab2:
+        st.subheader("Security Analysis Report")
+        
+        if st.session_state.anomalies_detected.empty:
+            st.success("✅ No security threats detected during monitoring period")
+            st.write("**Findings:**")
+            st.write("- All network traffic patterns appear normal")
+            st.write("- No suspicious device behavior identified")
+            st.write("- Port usage within expected parameters")
+        else:
+            st.warning(f"⚠️ {anomalies_count} security anomalies detected")
+            
+            # Severity breakdown
+            severity_summary = st.session_state.anomalies_detected['severity'].value_counts()
+            
+            st.write("**Threat Breakdown:**")
+            for severity, count in severity_summary.items():
+                st.write(f"- {severity}: {count} incidents")
+            
+            # Affected devices
+            affected_devices = st.session_state.anomalies_detected['device_id'].nunique()
+            st.write(f"**Affected Devices:** {affected_devices}")
+    
+    with tab3:
+        st.subheader("Recommendations")
+        
+        if anomaly_rate < 1:
+            st.success("**System Status: Excellent**")
+            st.write("**Recommendations:**")
+            st.write("- Continue current monitoring schedule")
+            st.write("- Regular model retraining (weekly)")
+            st.write("- Maintain security policies")
+        elif anomaly_rate < 3:
+            st.warning("**System Status: Good**")
+            st.write("**Recommendations:**")
+            st.write("- Monitor anomalous devices closely")
+            st.write("- Review security policies")
+            st.write("- Increase monitoring frequency")
+        else:
+            st.error("**System Status: Requires Attention**")
+            st.write("**Immediate Actions Required:**")
+            st.write("- Investigate all critical and high severity alerts")
+            st.write("- Review network access policies")
+            st.write("- Consider network segmentation")
+            st.write("- Implement additional security controls")
+        
+        # Export option
+        st.subheader("Export Report")
+        if st.button("Generate PDF Report", key="export_button"):
+            st.info("PDF export functionality would be implemented here")
 
 if __name__ == "__main__":
     main()
