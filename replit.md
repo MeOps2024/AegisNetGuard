@@ -90,7 +90,22 @@ The system does not currently include:
 
 Preferred communication style: Simple, everyday language.
 
+## Production Database Strategy
+
+### SQLite → PostgreSQL Migration Path
+- **Development**: SQLite (file-based, rapid prototyping)
+- **Production**: PostgreSQL with Neon Database (cloud-native, scalable)
+- **Migration Tool**: `postgresql_manager.py` with automated data transfer
+
+### Database Architecture
+- **Tables**: network_data, anomalies, alerts, system_logs, devices, ml_models
+- **Optimization**: Proper indexing for temporal queries and device lookups
+- **Features**: JSONB for flexible metadata, Arrays for multi-value fields
+- **Retention**: Automated cleanup policies (90-day default)
+
 ## Changelog
 
 Changelog:
-- July 06, 2025. Initial setup
+- July 16, 2025: PostgreSQL production module created with enterprise features
+- July 16, 2025: Complete application restructure - all Streamlit errors resolved
+- July 06, 2025: Initial setup
