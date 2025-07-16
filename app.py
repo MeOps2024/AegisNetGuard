@@ -104,7 +104,7 @@ def main():
     
     # Navigation sections
     sections = ["Dashboard", "Network Analysis", "Threat Detection", "System Configuration", "Reports"]
-    selected_section = st.selectbox("Navigate to section", sections, key="main_nav")
+    selected_section = st.selectbox("Navigate to section", sections, index=0)
     
     # Sidebar controls (simplified)
     with st.sidebar:
