@@ -30,7 +30,7 @@ class Dashboard:
         self._render_system_status(network_data, anomalies_data, model_trained)
         
         if network_data.empty:
-            st.info("📋 Générez des données pour commencer l'analyse du réseau.")
+            st.info("Generate network data to begin analysis.")
             return
         
         # Métriques principales
@@ -119,10 +119,10 @@ class Dashboard:
     
     def _render_alerts(self, anomalies_data):
         """Affiche les alertes en temps réel"""
-        st.subheader("🚨 Alertes en Temps Réel")
+        st.subheader("Real-Time Security Alerts")
         
         if anomalies_data.empty:
-            st.success("✅ Aucune anomalie détectée - Réseau sain")
+            st.success("No anomalies detected - Network is secure")
             return
         
         # Alertes par niveau de criticité
