@@ -13,7 +13,7 @@ from dashboard_clean import Dashboard
 def main():
     st.set_page_config(
         page_title="AEGISLAN - Enterprise Network Security",
-        page_icon="🛡️",
+        page_icon=":zap:",
         layout="wide",
         initial_sidebar_state="expanded"
     )

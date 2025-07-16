@@ -143,7 +143,7 @@ class AnomalyDetector:
         self.model.fit(X_scaled)
         self.is_trained = True
         
-        print("✅ Modèle entraîné avec succès!")
+        print("[SUCCESS] Modèle entraîné avec succès!")
         
         # Évaluation sur les données d'entraînement si les labels sont disponibles
         if 'is_anomaly' in df.columns:
@@ -151,7 +151,7 @@ class AnomalyDetector:
             predictions_binary = (predictions == -1).astype(int)
             true_labels = df['is_anomaly'].astype(int)
             
-            print("\n📊 Évaluation sur les données d'entraînement:")
+            print("\n[CHART] Évaluation sur les données d'entraînement:")
             print(f"Anomalies détectées: {predictions_binary.sum()}")
             print(f"Vraies anomalies: {true_labels.sum()}")
             
@@ -225,13 +225,13 @@ class AnomalyDetector:
             
             anomalies['severity'] = anomalies['anomaly_confidence'].apply(classify_severity)
             
-            print(f"🚨 {len(anomalies)} anomalies détectées!")
+            print(f"[ALERT] {len(anomalies)} anomalies détectées!")
             print(f"   - Critiques: {len(anomalies[anomalies['severity'] == 'Critique'])}")
             print(f"   - Élevées: {len(anomalies[anomalies['severity'] == 'Élevé'])}")
             print(f"   - Moyennes: {len(anomalies[anomalies['severity'] == 'Moyen'])}")
             print(f"   - Faibles: {len(anomalies[anomalies['severity'] == 'Faible'])}")
         else:
-            print("✅ Aucune anomalie détectée.")
+            print("[SUCCESS] Aucune anomalie détectée.")
         
         return anomalies
     

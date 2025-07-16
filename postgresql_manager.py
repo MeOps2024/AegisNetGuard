@@ -47,9 +47,9 @@ class PostgreSQLManager:
         try:
             self.connection = psycopg2.connect(self.connection_string)
             self.connection.autocommit = True
-            print(f"✅ Connexion PostgreSQL établie")
+            print(f"[SUCCESS] Connexion PostgreSQL établie")
         except psycopg2.Error as e:
-            print(f"❌ Erreur connexion PostgreSQL: {e}")
+            print(f"[ERROR] Erreur connexion PostgreSQL: {e}")
             raise
     
     def init_database(self):
@@ -230,10 +230,10 @@ class PostgreSQLManager:
                 cursor.execute(sql)
             
             cursor.close()
-            print("✅ Base de données PostgreSQL initialisée avec succès")
+            print("[SUCCESS] Base de données PostgreSQL initialisée avec succès")
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur initialisation base: {e}")
+            print(f"[ERROR] Erreur initialisation base: {e}")
             raise
     
     def insert_network_data(self, data: Dict[str, Any]) -> int:
@@ -274,7 +274,7 @@ class PostgreSQLManager:
             return inserted_count
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur insertion données réseau: {e}")
+            print(f"[ERROR] Erreur insertion données réseau: {e}")
             raise
     
     def insert_anomaly(self, anomaly_data: Dict[str, Any]) -> int:
@@ -300,7 +300,7 @@ class PostgreSQLManager:
             return anomaly_id
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur insertion anomalie: {e}")
+            print(f"[ERROR] Erreur insertion anomalie: {e}")
             raise
     
     def get_network_data(self, hours: int = 24, limit: int = None, 
@@ -339,7 +339,7 @@ class PostgreSQLManager:
         try:
             return pd.read_sql(base_sql, self.connection, params=params)
         except psycopg2.Error as e:
-            print(f"❌ Erreur récupération données: {e}")
+            print(f"[ERROR] Erreur récupération données: {e}")
             raise
     
     def get_anomalies(self, hours: int = 24, status: str = 'active', 
@@ -379,7 +379,7 @@ class PostgreSQLManager:
         try:
             return pd.read_sql(base_sql, self.connection, params=params)
         except psycopg2.Error as e:
-            print(f"❌ Erreur récupération anomalies: {e}")
+            print(f"[ERROR] Erreur récupération anomalies: {e}")
             raise
     
     def get_device_statistics(self, device_id: str, days: int = 7) -> Dict[str, Any]:
@@ -427,7 +427,7 @@ class PostgreSQLManager:
             }
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur statistiques appareil: {e}")
+            print(f"[ERROR] Erreur statistiques appareil: {e}")
             raise
     
     def create_alert(self, alert_data: Dict[str, Any]) -> int:
@@ -452,7 +452,7 @@ class PostgreSQLManager:
             return alert_id
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur création alerte: {e}")
+            print(f"[ERROR] Erreur création alerte: {e}")
             raise
     
     def log_system_event(self, level: str, component: str, message: str, 
@@ -476,7 +476,7 @@ class PostgreSQLManager:
             cursor.close()
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur log système: {e}")
+            print(f"[ERROR] Erreur log système: {e}")
     
     def get_system_statistics(self) -> Dict[str, Any]:
         """Statistiques générales du système"""
@@ -499,7 +499,7 @@ class PostgreSQLManager:
             return stats
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur statistiques système: {e}")
+            print(f"[ERROR] Erreur statistiques système: {e}")
             raise
     
     def cleanup_old_data(self, days: int = 90):
@@ -518,12 +518,12 @@ class PostgreSQLManager:
             for table_name, query in cleanup_queries:
                 cursor.execute(query)
                 deleted_count = cursor.rowcount
-                print(f"🧹 {table_name}: {deleted_count} anciens enregistrements supprimés")
+                print(f"[CLEAN] {table_name}: {deleted_count} anciens enregistrements supprimés")
             
             cursor.close()
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur nettoyage données: {e}")
+            print(f"[ERROR] Erreur nettoyage données: {e}")
     
     def export_data(self, table_name: str, start_date: str = None, 
                    end_date: str = None, format: str = 'csv') -> str:
@@ -570,7 +570,7 @@ class PostgreSQLManager:
             return filename
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur export données: {e}")
+            print(f"[ERROR] Erreur export données: {e}")
             raise
     
     def get_database_size(self) -> Dict[str, Any]:
@@ -603,14 +603,14 @@ class PostgreSQLManager:
             }
             
         except psycopg2.Error as e:
-            print(f"❌ Erreur taille base: {e}")
+            print(f"[ERROR] Erreur taille base: {e}")
             raise
     
     def close(self):
         """Ferme la connexion à la base"""
         if self.connection:
             self.connection.close()
-            print("🔒 Connexion PostgreSQL fermée")
+            print("[SECURE] Connexion PostgreSQL fermée")
 
 # Exemple d'utilisation et migration depuis SQLite
 class DatabaseMigration:
@@ -648,15 +648,15 @@ class DatabaseMigration:
                     
                     # Insérer dans PostgreSQL
                     self.pg_manager.insert_network_data(df)
-                    print(f"✅ {len(df)} enregistrements migrés pour {table_name}")
+                    print(f"[SUCCESS] {len(df)} enregistrements migrés pour {table_name}")
                 else:
-                    print(f"⚠️ Table {table_name} vide")
+                    print(f"[WARNING] Table {table_name} vide")
             
             sqlite_conn.close()
-            print("🎉 Migration complète vers PostgreSQL")
+            print("[SUCCESS] Migration complète vers PostgreSQL")
             
         except Exception as e:
-            print(f"❌ Erreur migration: {e}")
+            print(f"[ERROR] Erreur migration: {e}")
             raise
     
     def _adapt_network_data(self, df):

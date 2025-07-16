@@ -23,9 +23,9 @@ class ConfigManager:
             try:
                 with open(self.config_file, 'r') as f:
                     self.config = json.load(f)
-                print(f"✅ Configuration chargée depuis {self.config_file}")
+                print(f"[SUCCESS] Configuration chargée depuis {self.config_file}")
             except Exception as e:
-                print(f"⚠️ Erreur lecture config: {e}, utilisation config par défaut")
+                print(f"[WARNING] Erreur lecture config: {e}, utilisation config par défaut")
                 self.config = self.get_default_config()
         else:
             self.config = self.get_default_config()
@@ -164,9 +164,9 @@ class ConfigManager:
         try:
             with open(self.config_file, 'w') as f:
                 json.dump(self.config, f, indent=4, default=str)
-            print(f"✅ Configuration sauvegardée dans {self.config_file}")
+            print(f"[SUCCESS] Configuration sauvegardée dans {self.config_file}")
         except Exception as e:
-            print(f"❌ Erreur sauvegarde config: {e}")
+            print(f"[ERROR] Erreur sauvegarde config: {e}")
     
     def update_config(self, section: str, key: str, value: Any):
         """Met à jour une valeur de configuration"""
@@ -176,7 +176,7 @@ class ConfigManager:
         
         self.config[section][key] = value
         self.save_config()
-        print(f"✅ Configuration mise à jour: {section}.{key} = {value}")
+        print(f"[SUCCESS] Configuration mise à jour: {section}.{key} = {value}")
     
     def get_database_config(self) -> Dict[str, Any]:
         """Configuration de base de données"""
@@ -203,7 +203,7 @@ class ConfigManager:
             self.config["database"]["postgresql"]["connection_string"] = connection_string
         
         self.save_config()
-        print("🔄 Basculement vers PostgreSQL configuré")
+        print("[REFRESH] Basculement vers PostgreSQL configuré")
     
     def switch_to_sqlite(self, db_path: str = None):
         """Bascule vers SQLite"""
@@ -214,7 +214,7 @@ class ConfigManager:
             self.config["database"]["sqlite"]["path"] = db_path
         
         self.save_config()
-        print("🔄 Basculement vers SQLite configuré")
+        print("[REFRESH] Basculement vers SQLite configuré")
     
     def is_production(self) -> bool:
         """Vérifie si on est en environnement de production"""
@@ -231,7 +231,7 @@ class ConfigManager:
         self.config["network"]["monitoring"]["monitoring_interval"] = 60  # 1 minute
         
         self.save_config()
-        print("🚀 Environnement de production configuré")
+        print("[LAUNCH] Environnement de production configuré")
 
 # Factory pour créer le bon gestionnaire de base selon la config
 def create_database_manager(config_manager: ConfigManager):
