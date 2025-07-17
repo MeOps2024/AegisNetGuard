@@ -1,0 +1,4 @@
+.venv/
+venv_aegis/
+uv.lock
+pyproject.toml
