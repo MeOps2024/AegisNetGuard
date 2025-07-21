@@ -10,6 +10,16 @@ import time
 import threading
 from database_manager import DatabaseManager
 
+# Gérer l'import optionnel de pysnmp au niveau du module
+try:
+    from pysnmp.hlapi import (
+        SnmpEngine, CommunityData, UdpTransportTarget,
+        ContextData, ObjectType, ObjectIdentity, nextCmd
+    )
+    pysnmp_available = True
+except ImportError:
+    pysnmp_available = False
+
 class RealNetworkCollector:
     """Collecteur de données réseau réelles pour AEGISLAN"""
     
@@ -22,7 +32,8 @@ class RealNetworkCollector:
     def scan_network_nmap(self, ports="1-1000"):
         """Scan réseau avec Nmap"""
         try:
-            cmd = f"nmap -sn -PE -PP -PS21,22,23,25,53,80,135,139,443,445,993,995 {self.network_range}"
+            # Utiliser -oX - pour une sortie XML sur stdout, plus robuste à parser
+            cmd = f"nmap -sS -O -p {ports} {self.network_range} -oX -"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=300)
             
             if result.returncode == 0:
@@ -40,36 +51,36 @@ class RealNetworkCollector:
     
     def _parse_nmap_output(self, output):
         """Parse la sortie Nmap"""
-        devices = []
-        current_host = None
-        
-        for line in output.split('\n'):
-            # Recherche d'adresses IP
-            ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
-            if ip_match and "Nmap scan report for" in line:
-                current_host = ip_match.group(1)
-            
-            # Recherche de MAC
-            mac_match = re.search(r'([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})', line)
-            if mac_match and current_host:
-                mac_address = mac_match.group(0)
-                
-                # Détection du type d'appareil basée sur MAC
+        """Parse la sortie XML de Nmap pour plus de robustesse."""
+        try:
+            devices = []
+            root = ET.fromstring(output)
+
+            for host in root.findall('host'):
+                ip_address = host.find('address[@addrtype="ipv4"]').get('addr')
+                mac_address_element = host.find('address[@addrtype="mac"]')
+                mac_address = mac_address_element.get('addr') if mac_address_element is not None else 'Unknown'
+                vendor = mac_address_element.get('vendor') if mac_address_element is not None else 'Unknown'
+
                 device_type = self._detect_device_type(mac_address)
-                
+                if device_type == 'Unknown' and vendor != 'Unknown':
+                    device_type = vendor
+
                 devices.append({
                     'timestamp': datetime.now(),
-                    'device_id': f"device_{current_host.split('.')[-1]}",
-                    'ip_address': current_host,
+                    'device_id': f"device_{ip_address.replace('.', '_')}",
+                    'ip_address': ip_address,
                     'mac_address': mac_address,
                     'device_type': device_type,
-                    'port': 0,
-                    'protocol': 'ICMP',
+                    'port': 0, # Le scan de base ne donne pas de port de connexion
+                    'protocol': 'ARP/ICMP', # Le scan de découverte utilise ces protocoles
                     'data_volume_mb': 0,
                     'is_anomaly': False
                 })
-        
-        return pd.DataFrame(devices)
+            return pd.DataFrame(devices)
+        except ET.ParseError as e:
+            self.db_manager.log_system_event("ERROR", "NetworkCollector", f"Nmap XML parsing failed: {e}")
+            return pd.DataFrame()
     
     def _detect_device_type(self, mac_address):
         """Détecte le type d'appareil basé sur l'adresse MAC"""
@@ -214,10 +225,11 @@ class RealNetworkCollector:
     
     def collect_snmp_data(self, router_ip, community="public"):
         """Collecte données SNMP depuis équipements réseau"""
+        if not pysnmp_available:
+            self.db_manager.log_system_event("WARNING", "NetworkCollector", "pysnmp not installed, SNMP collection disabled")
+            return pd.DataFrame()
+
         try:
-            # Nécessite pysnmp: pip install pysnmp
-            from pysnmp.hlapi import *
-            
             snmp_data = []
             
             # OID pour interfaces réseau
@@ -226,13 +238,11 @@ class RealNetworkCollector:
                 CommunityData(community),
                 UdpTransportTarget((router_ip, 161)),
                 ContextData(),
-                ObjectType(ObjectIdentity('1.3.6.1.2.1.2.2.1.10')),  # ifInOctets
+                ObjectType(ObjectIdentity('1.3.6.1.2.1.2.2.1.10')),
                 lexicographicMode=False,
                 maxRows=10):
                 
                 if errorIndication:
-                    break
-                if errorStatus:
                     break
                 
                 for varBind in varBinds:
@@ -245,15 +255,12 @@ class RealNetworkCollector:
                         'device_type': 'router',
                         'port': 161,
                         'protocol': 'SNMP',
-                        'data_volume_mb': float(value) / (1024 * 1024),
+                        'data_volume_mb': float(value) / (1024 * 1024), # ifInOctets
                         'is_anomaly': False
                     })
             
             return pd.DataFrame(snmp_data)
-            
-        except ImportError:
-            self.db_manager.log_system_event("WARNING", "NetworkCollector", "pysnmp not installed, SNMP collection disabled")
-            return pd.DataFrame()
+
         except Exception as e:
             self.db_manager.log_system_event("ERROR", "NetworkCollector", f"SNMP collection error: {str(e)}")
             return pd.DataFrame()

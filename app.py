@@ -8,6 +8,7 @@ from plotly.subplots import make_subplots
 
 from data_simulator import NetworkDataSimulator
 from anomaly_detector import AnomalyDetector
+from real_network_collector import RealNetworkCollector
 from dashboard_clean import Dashboard
 
 def main():
@@ -64,6 +65,9 @@ def main():
     if 'simulator' not in st.session_state:
         st.session_state.simulator = NetworkDataSimulator()
     
+    if 'collector' not in st.session_state:
+        st.session_state.collector = RealNetworkCollector()
+    
     if 'detector' not in st.session_state:
         st.session_state.detector = AnomalyDetector()
     
@@ -102,21 +106,34 @@ def main():
         st.markdown("### System Control")
         st.markdown("---")
     
-        # Data simulation controls
-        st.markdown("#### Network Data")
-        num_devices = st.slider("Devices", 5, 50, 20, key="devices_slider")
-        hours_of_data = st.slider("Hours", 1, 72, 24, key="hours_slider")
-        anomaly_rate = st.slider("Anomaly Rate (%)", 1, 20, 5, key="anomaly_slider")
-        
-        if st.button("Generate Data", type="primary", key="generate_button"):
-            with st.spinner("Processing network data..."):
-                st.session_state.network_data = st.session_state.simulator.generate_network_data(
-                    num_devices=num_devices,
-                    hours=hours_of_data,
-                    anomaly_percentage=anomaly_rate
-                )
-                st.session_state.model_trained = False
-            st.success("Data generated successfully")
+        # Data source selection
+        st.markdown("#### Data Source")
+        data_source = st.radio("Choose data source", ("Simulated Data", "Real Network Scan"), key="data_source_radio")
+
+        if data_source == "Simulated Data":
+            # Data simulation controls
+            st.markdown("##### Simulation Settings")
+            num_devices = st.slider("Devices", 5, 50, 20, key="devices_slider")
+            hours_of_data = st.slider("Hours", 1, 72, 24, key="hours_slider")
+            anomaly_rate = st.slider("Anomaly Rate (%)", 1, 20, 5, key="anomaly_slider")
+            
+            if st.button("Generate Data", type="primary", key="generate_button"):
+                with st.spinner("Processing network data..."):
+                    st.session_state.network_data = st.session_state.simulator.generate_network_data(
+                        num_devices=num_devices,
+                        hours=hours_of_data,
+                        anomaly_percentage=anomaly_rate
+                    )
+                    st.session_state.model_trained = False
+                st.success("Simulated data generated successfully")
+        else: # Real Network Scan
+            st.markdown("##### Real Scan Settings")
+            scan_ports = st.text_input("Ports to scan", "1-1000", key="scan_ports_input")
+            if st.button("Scan Network (Nmap)", type="primary", key="scan_button"):
+                with st.spinner("Scanning network with Nmap... This may take a few minutes."):
+                    st.session_state.network_data = st.session_state.collector.scan_network_nmap(ports=scan_ports)
+                    st.session_state.model_trained = False
+                st.success(f"Network scan complete. Found {len(st.session_state.network_data)} devices.")
         
         # Model training controls
         st.markdown("#### AI Model")
@@ -149,7 +166,7 @@ def main():
         
         # Anomaly detection
         st.markdown("#### Anomaly Detection")
-        if st.button("Detect Anomalies", key="detect_button") and st.session_state.model_trained and not st.session_state.network_data.empty:
+        if st.button("Detect Anomalies", key="detect_button", disabled=(not st.session_state.model_trained or st.session_state.network_data.empty)):
             detection_progress = st.empty()
             detection_progress.info("Analyzing network patterns...")
             
@@ -160,8 +177,6 @@ def main():
                 detection_progress.warning(f"⚠️ {anomaly_count} anomalies detected!")
             else:
                 detection_progress.success("No anomalies detected")
-            
-            detection_progress.empty()
     
     # Main content based on selected section
     if selected_section == "Dashboard":

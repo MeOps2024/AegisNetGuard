@@ -11,6 +11,7 @@ class NetworkDataSimulator:
         self.device_types = ['workstation', 'server', 'printer', 'phone', 'tablet', 'iot_device']
         self.common_ports = [22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 3389, 5432, 3306]
         self.protocols = ['TCP', 'UDP', 'ICMP']
+        self.unusual_protocols = ['SCTP', 'GRE', 'OSPF', 'EIGRP'] # Liste explicite pour les anomalies
         
     def _generate_mac_address(self):
         """Génère une adresse MAC aléatoire"""
@@ -164,28 +165,40 @@ class NetworkDataSimulator:
         elif anomaly_type == 'unusual_protocol':
             # Protocole inhabituel pour ce type d'appareil
             port = random.choice(device_profile['ports_preference'])
-            unusual_protocols = [p for p in self.protocols if p not in ['TCP', 'UDP']]
-            if not unusual_protocols:
-                unusual_protocols = ['SCTP', 'GRE']
-            protocol = random.choice(unusual_protocols) if unusual_protocols else 'TCP'
+            protocol = random.choice(self.unusual_protocols)
             min_vol, max_vol = device_profile['data_volume_range']
             data_volume = random.randint(min_vol, max_vol)
             
         else:  # port_scanning
-            # Scan de ports (activité sur de nombreux ports)
-            port = random.randint(1, 1024)
-            protocol = 'TCP'
-            data_volume = random.randint(1, 10)  # Très petit volume pour un scan
-        
+            # Un scan de port est une rafale de connexions, pas une seule.
+            # On retourne une liste d'événements pour cette anomalie.
+            scan_events = []
+            num_ports_to_scan = random.randint(15, 50)
+            for _ in range(num_ports_to_scan):
+                scan_events.append(self._create_anomaly_event(
+                    device_profile, timestamp, 'port_scanning',
+                    port=random.randint(1, 1024), protocol='TCP',
+                    data_volume=random.uniform(0.01, 0.1)
+                ))
+            return scan_events
+
+        # Pour toutes les anomalies à événement unique, créer et retourner le dictionnaire d'événement
+        return self._create_anomaly_event(
+            device_profile, timestamp, anomaly_type,
+            port=port, protocol=protocol, data_volume=data_volume
+        )
+
+    def _create_anomaly_event(self, profile, timestamp, anomaly_type, **kwargs):
+        """Crée un dictionnaire d'événement d'anomalie."""
         return {
             'timestamp': timestamp,
-            'device_id': device_profile['device_id'],
-            'mac_address': device_profile['mac_address'],
-            'ip_address': device_profile['ip_address'],
-            'device_type': device_profile['device_type'],
-            'port': port,
-            'protocol': protocol,
-            'data_volume_mb': data_volume,
+            'device_id': profile['device_id'],
+            'mac_address': profile['mac_address'],
+            'ip_address': profile['ip_address'],
+            'device_type': profile['device_type'],
+            'port': kwargs.get('port'),
+            'protocol': kwargs.get('protocol'),
+            'data_volume_mb': kwargs.get('data_volume'),
             'is_anomaly': True,
             'anomaly_type': anomaly_type
         }
@@ -228,7 +241,11 @@ class NetworkDataSimulator:
                     traffic_entry = self._generate_normal_traffic(device_profile, current_time)
                 
                 if traffic_entry:
-                    network_data.append(traffic_entry)
+                    # Gérer le cas où une anomalie retourne plusieurs événements (port scan)
+                    if isinstance(traffic_entry, list):
+                        network_data.extend(traffic_entry)
+                    else:
+                        network_data.append(traffic_entry)
             
             current_time += time_interval
         

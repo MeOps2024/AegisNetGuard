@@ -1,4 +1,13 @@
-.venv/
-venv_aegis/
-uv.lock
-pyproject.toml
+# Virtual Environments
+.venv
+venv
+venv_aegis
+aegislan_env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE / Editor specific
+.idea/
+.vscode/

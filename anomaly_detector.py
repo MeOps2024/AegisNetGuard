@@ -69,15 +69,14 @@ class AnomalyDetector:
                 else:
                     # Mode prédiction: utiliser l'encodeur existant
                     if feature in self.label_encoders:
-                        # Gérer les nouvelles valeurs non vues pendant l'entraînement
-                        def safe_transform(value):
-                            try:
-                                return self.label_encoders[feature].transform([value])[0]
-                            except ValueError:
-                                # Valeur non vue pendant l'entraînement
-                                return -1
-                        
-                        features_df[f'{feature}_encoded'] = data[feature].fillna('unknown').apply(safe_transform)
+                        # Gérer les nouvelles valeurs non vues pendant l'entraînement de manière vectorisée
+                        le = self.label_encoders[feature]
+                        known_classes = set(le.classes_)
+                        # Remplacer les valeurs inconnues par 'unknown' (que l'encodeur connaît)
+                        transformed_values = data[feature].fillna('unknown').apply(
+                            lambda x: x if x in known_classes else 'unknown'
+                        )
+                        features_df[f'{feature}_encoded'] = le.transform(transformed_values)
                     else:
                         # Pas d'encodeur disponible
                         features_df[f'{feature}_encoded'] = 0
